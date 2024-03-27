@@ -1,9 +1,8 @@
-// import { useState, useEffect } from 'react';
 import copy from '../assets/copy.svg';
 import { useEffect, useState } from 'react';
 import link from '../assets/link.svg';
-// import  loader  from '../assets/loader.svg';
-// import  tick  from '../assets/tick.svg';
+import loader from '../assets/loader.svg';
+import tick from '../assets/tick.svg';
 
 import { useLazyGetSummaryQuery } from '../services/article';
 
@@ -17,6 +16,7 @@ const Demo = () => {
   const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
   const [article, setArticle] = useState<Article>({ url: '', article: '' });
   const [allArticles, setAllArticles] = useState<Article[]>([]);
+  const [copied, setCopied] = useState('');
 
   useEffect(() => {
     const articlesFromLocalStorage = localStorage.getItem('articles');
@@ -26,7 +26,7 @@ const Demo = () => {
     }
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     const { data } = await getSummary({ articleUrl: article.url });
     if (data?.summary) {
@@ -36,6 +36,12 @@ const Demo = () => {
       setAllArticles(updatedAllArticles);
       localStorage.setItem('articles', JSON.stringify(updatedAllArticles));
     }
+  };
+
+  const handleCopy = (copyUrl: string) => {
+    setCopied(copyUrl);
+    navigator.clipboard.writeText(copyUrl);
+    setTimeout(() => setCopied(''), 3000);
   };
 
   return (
@@ -72,21 +78,56 @@ const Demo = () => {
               onClick={() => setArticle(item)}
               key={`link-${index}`}
             >
-              <div className="copy_btn">
+              <div
+                className="copy_btn"
+                onClick={() => {
+                  handleCopy(item.url);
+                }}
+              >
                 <img
-                  src={copy}
+                  src={copied === item.url ? tick : copy}
                   alt="copy_icon"
                   className="w-[40%] h-[40%] object-contain"
                 />
               </div>
-              <p className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate">
+              <a
+                className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate"
+                href={item.url}
+                target="_blank"
+              >
                 {item.url}
-              </p>
+              </a>
             </div>
           ))}
         </div>
       </div>
-      {/* Display Results */}
+      <div className="my-10 max-w-full justify-center items-center">
+        {isFetching ? (
+          <img
+            src={loader}
+            alt="loading"
+            className="w-20 h-20 object-contain"
+          />
+        ) : error ? (
+          <p className="font-inter text-black font-bold text-center">
+            Error processing summary <br />
+            {/* <span>{error?.data.error}</span> */}
+          </p>
+        ) : (
+          article.summary && (
+            <div className="flex flex-col gap-3">
+              <h2 className="font-satosi font-bold text-gray-600 text-xl">
+                Article <span className="blue_gradient">Summary</span>
+              </h2>
+              <div className="summary_box">
+                <p className="font-inter font-medium text-sm text-gray-700">
+                  {article.summary}
+                </p>
+              </div>
+            </div>
+          )
+        )}
+      </div>
     </section>
   );
 };
