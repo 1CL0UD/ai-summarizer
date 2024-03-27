@@ -5,10 +5,19 @@ import link from '../assets/link.svg';
 // import  loader  from '../assets/loader.svg';
 // import  tick  from '../assets/tick.svg';
 
+import { useLazyGetSummaryQuery } from '../services/article';
+
 const Demo = () => {
+  const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
   const [article, setArticle] = useState({ url: '', article: '' });
   const handleSubmit = async (e) => {
-    alert('Submitted');
+    e.preventDefault();
+    const { data } = await getSummary({ articleUrl: article.url });
+    if (data?.summary) {
+      const newArticle = { ...article, summary: data.summary };
+      setArticle(newArticle);
+      console.log(newArticle);
+    }
   };
   return (
     <section className="mt-16 w-full max-w-xl">
